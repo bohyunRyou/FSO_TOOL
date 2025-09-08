@@ -5,3 +5,4 @@ streamlit-echarts>=0.4.0
 pandas
 numpy
 matplotlib
+scipy
