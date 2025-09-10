@@ -291,7 +291,7 @@ with tab2:
     "Divergence theta_Tx" -> "Mean Tx pointing loss" 
     "Tx pointing error"-> "Mean Tx pointing loss" 
 
-    "visibility" -> "Clear-sky attenuation"
+    "visibility" -> "-sky attenuation"
     "effective atmospheric thickness" -> "Clear-sky attenuation"
     "Elevation angle at R" -> "Clear-sky attenuation"
     "Wavelength" -> "Clear-sky attenuation"
@@ -405,6 +405,7 @@ with st.sidebar:
     selected_mode = st.selectbox("Select mode", mode_li, index = len(mode_li)-1)
     if st.button("🔄 Reset session"):
         st.session_state.clear()
+        st.rerun()
     if st.button('cal_input params'):
         # Tx_antenna none val cal
         #link_geometry
@@ -590,4 +591,5 @@ with st.sidebar:
         st.session_state.Dynamic_fades.loc["Link margin at prob","val"] = P_probe- P_target
         st.session_state.Dynamic_fades.loc["Ber at prob","val"] = BER_probe
         #st.session_state.Dynamic_fades = Dynamic_fades_de.copy()
+
 
