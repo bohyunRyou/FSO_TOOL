@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-
+#initial value
 ##input table
 
 laser_source = {
@@ -17,6 +17,12 @@ Tx_antenna ={
 Tx_antenna_index = ["Tx radius W_Tx","Equiv. hard diameter D_Tx","Divergence theta_Tx","Rayleigh range Z_Tx","Beam radius at Rx W","Tx optics loss a_Tx_optics","On-axis intensity at Rx","Numb. of indep. beams"]
 Tx_antenna_df = pd.DataFrame(Tx_antenna, index = Tx_antenna_index)
 
+Tx_pointing_error ={
+    "val":[2.63e-5, 1.8028e-05],
+    "unit":["rad"]
+}
+Tx_pointing_error_index = ["Tx pointing error","Tx pointing error standard deviation"]
+Tx_pointing_error_df = pd.DataFrame(Tx_pointing_error,index = Tx_pointing_error_index)
 
 Link_geometry={
     "val":[0,4.00e05, 0, 20.0, 0],
@@ -25,6 +31,12 @@ Link_geometry={
 Link_geometry_index = ["Link distance Z","Tx height", "Rx height", "Elevation alpha at R", "Fresnel scale"]
 Link_geometry_df = pd.DataFrame(Link_geometry, index = Link_geometry_index)
 
+Clear_sky_attenuation = {
+    "val":[8.0e3,2.15e4],
+    "unit":["m","m"]
+}
+Clear_sky_attenuation_index = ["effective atmospheric thickness","visibility"]
+Clear_sky_attenuation_df = pd.DataFrame(Clear_sky_attenuation, index = Clear_sky_attenuation_index)
 Rx_antenna = {
     "val":[2.85e-1, 0, 0, 0, 1, -3.0],
     "unit":["m","m","rad","m","numb","dB"]

@@ -4,6 +4,44 @@ import matplotlib.pyplot as plt
 import math
 from scipy import integrate
 from scipy.special import erfinv,erfcinv
+import streamlit as st
+##stream lit data구현
+
+def input_df_val(session_df, cal_list,key_prefix):
+    '''session_df : st.session.dataframe , cal_list: 입력값을 통해 산출되는 값에 해당하는 index
+    return : df -> session_df에 저장됨.'''
+    df_index_li = list(session_df.index)
+    df = session_df
+    for x in df_index_li:
+        c1,c2,c3 = st.columns([6,3,2])
+        if x in cal_list:
+            ## cal_list값 출력
+            with c1:
+                st.markdown(f"<div style='text-align:right'>{x+":"}</div>", unsafe_allow_html=True)
+            with c2:
+                c_v = session_df.loc[x,"val"]
+                st.markdown(f"<span style = 'color:purple'><i>{c_v:.2e}</i></span>",
+                            unsafe_allow_html=True)
+            with c3:
+                st.markdown(session_df.loc[x,"unit"])
+        else: 
+            ## 입력값 사용자로 부터 받거나, default값 출력
+            with c1:
+                st.markdown(f"<div style='text-align:right'>{x+":"}</div>", unsafe_allow_html=True)
+            with c2:
+                key = f"ni_{key_prefix}_{x}"
+                default_val = session_df.loc[x,"val"]
+                if "Numb" in x:
+                    default_val= int(default_val)
+                    input_val = st.number_input("",default_val,
+                                                format="%d", label_visibility = "collapsed" ,key=key)
+                else:
+                    input_val = st.number_input("",default_val,
+                                                format="%.2e",label_visibility="collapsed",key=key)
+                df.loc[x,"val"] = input_val
+            with c3:
+                st.markdown(session_df.loc[x,"unit"])
+    return df
 
 #input 함수 연결
 # tx antenna cal
@@ -39,7 +77,7 @@ def On_axis_intensity_at_Rx(lambda_,W, P,Z, alpha_Tx_optics):
     return val
 
 #Target Power
-def Target_Rx_power(BER,P_fade,amplification_factor,sigma_tx,theta_tx, R_b, lambda_): 
+def Target_Rx_power(BER,P_fade,amplification_factor, R_b, lambda_): 
     #const
     h = 6.626e-34
     c = 299792458
@@ -48,11 +86,11 @@ def Target_Rx_power(BER,P_fade,amplification_factor,sigma_tx,theta_tx, R_b, lamb
     n_det = amplification_factor*n_ideal
     z_fade = np.sqrt(2)*erfcinv(2*P_fade)
     
-    b = sigma_tx/theta_tx
-    sigma_db = 17.372*(b)**2
-    M_fade = z_fade*sigma_db
+    #b = sigma_tx/theta_tx
+    #sigma_db = 17.372*(b)**2
+    #M_fade = z_fade*sigma_db
     P_sens = n_det*h*c*R_b/(lambda_)
-    val = 10*np.log10(1e3*P_sens) + M_fade
+    val = 10*np.log10(1e3*P_sens) #+ M_fade
     val2 = 10**((val-30)/10)
     val3 = val2/(h*c/lambda_)
     return val,val2,val3
@@ -114,15 +152,32 @@ def Near_field_loss(Z,Z_tx,Z_rx):
     val = (Z**2)/(Z**2 +(Z_tx+Z_rx)**2)
     val = 10*np.log10(val)
     return val   
-def Mean_Tx_pointing_loss(sigma_theta, Z,W_R):
-    #Z: Link distance
-    #sigma_theta = pointing jitter
-    #W_R: Beam size at R
-    sigma_r = sigma_theta*Z
-    E_k = 1/(1 + 4*(sigma_r/W_R)**2)
-    val = -10*np.log10(E_k)
+def Mean_Tx_pointing_loss(Tx_pointing_error,theta_tx):
+    val = Tx_pointing_error/theta_tx
+    val = np.exp(-2*val*val)
+    val = 10*np.log10(val)
     return val
-#def Clear_sky_attenuation():
+def Clear_sky_attenuation(visibility,h_eff, elevation,lambda_):
+    elevation = elevation
+    
+    d_atm = h_eff/np.sin(elevation*np.pi/180)/1e3
+    visibility = visibility/1e3
+    if visibility>50:
+        q = 1.6
+    elif visibility>6:
+        q = 1.3
+    elif visibility>1:
+        q = 0.585*visibility**(1/3)
+    else:
+        q = 0
+    print(q)
+    print(d_atm)
+    coeff = 3.91/visibility*(lambda_/0.55e-6)**(-q)
+    print(coeff)
+    val = np.exp(-coeff*d_atm)
+    val = 10*np.log10(val)
+    return val
+
 #def Beam_spread_loss():
 def Mean_Rx_Strehl_ratio(D_T,r0):
     #D_rx:equiv hard diameter ,r0: Fried's parameter
@@ -184,13 +239,7 @@ def Tx_pointing_fade_loss(P_fade,sigma_tx, theta_tx):
     val = P_fade**(4*b_tx**2)
     val = 10*np.log10(val)
     return val
-def sigma_R(HV_func,z,lambda_):
-    # In weak turbulence, sigma_I^2 can be approximated by the Rytov Index.
-    # val -> squared ->root 
-    val,err = integrate.quad(integrand,0,z,epsabs=1e-12, epsrel=1e-9)
-    val = val*(19.2/(lambda_**(7/6)))
-    val = np.sqrt(val)
-    return val
+
 def sigma_I(sigma_r):
     val1 = (0.49*sigma_r**2)/(1+1.11*sigma_r**(12/5))**(7/6) + 0.51*sigma_r**2/(1+0.69*sigma_r**(12/5))**(5/6)
     val = np.exp(val1)-1
@@ -207,8 +256,8 @@ def sigma_eff(D, sigma_I, lambda_, Z):
     val = A_pw*sigma_I**2
     val = np.sqrt(val)
     return val
-def Scintillation_loss(rho_thr, sigma_I):
-    val = 4.343*(erfinv(2*rho_thr - 1)*(2*np.log(sigma_I**2 + 1))**(1/2)- (1/2)*np.log(sigma_I**2+1))
+def Scintillation_loss(rho_thr, sigma_eff):
+    val = 4.343*(erfinv(2*rho_thr - 1)*(2*np.log(sigma_eff**2 + 1))**(1/2)- (1/2)*np.log(sigma_eff**2+1))
     return val
     
 def SR_shortterm(D,r):
