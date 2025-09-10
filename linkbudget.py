@@ -291,7 +291,7 @@ with tab2:
     "Divergence theta_Tx" -> "Mean Tx pointing loss" 
     "Tx pointing error"-> "Mean Tx pointing loss" 
 
-    "visibility" -> "-sky attenuation"
+    "visibility" -> "Clear-sky attenuation"
     "effective atmospheric thickness" -> "Clear-sky attenuation"
     "Elevation angle at R" -> "Clear-sky attenuation"
     "Wavelength" -> "Clear-sky attenuation"
@@ -591,5 +591,6 @@ with st.sidebar:
         st.session_state.Dynamic_fades.loc["Link margin at prob","val"] = P_probe- P_target
         st.session_state.Dynamic_fades.loc["Ber at prob","val"] = BER_probe
         #st.session_state.Dynamic_fades = Dynamic_fades_de.copy()
+
 
 
