@@ -403,6 +403,8 @@ with st.sidebar:
     st.title("Configuration")
     mode_li = ["NO AO","WITH AO"]
     selected_mode = st.selectbox("Select mode", mode_li, index = len(mode_li)-1)
+    if st.button("🔄 Reset session"):
+        st.session_state.clear()
     if st.button('cal_input params'):
         # Tx_antenna none val cal
         #link_geometry
@@ -588,3 +590,4 @@ with st.sidebar:
         st.session_state.Dynamic_fades.loc["Link margin at prob","val"] = P_probe- P_target
         st.session_state.Dynamic_fades.loc["Ber at prob","val"] = BER_probe
         #st.session_state.Dynamic_fades = Dynamic_fades_de.copy()
+
