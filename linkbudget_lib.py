@@ -13,7 +13,7 @@ def input_df_val(session_df, cal_list,key_prefix):
     df_index_li = list(session_df.index)
     df = session_df
     for x in df_index_li:
-        c1,c2,c3 = st.columns([6,3,2])
+        c1,c2,c3 = st.columns([5,4,2])
         if x in cal_list:
             ## cal_list값 출력
             with c1:
@@ -80,8 +80,7 @@ def On_axis_intensity_at_Rx(lambda_,W, P,Z, alpha_Tx_optics):
 def Target_Rx_power(BER,P_fade,amplification_factor, R_b, lambda_): 
     #const
     h = 6.626e-34
-    c = 299792458
-    
+    c =299792458
     n_ideal= -np.log(2*BER) # idealized n(phonton)
     n_det = amplification_factor*n_ideal
     z_fade = np.sqrt(2)*erfcinv(2*P_fade)
@@ -92,7 +91,7 @@ def Target_Rx_power(BER,P_fade,amplification_factor, R_b, lambda_):
     P_sens = n_det*h*c*R_b/(lambda_)
     val = 10*np.log10(1e3*P_sens) #+ M_fade
     val2 = 10**((val-30)/10)
-    val3 = val2/(h*c/lambda_)
+    val3 = val2/(h*c/lambda_)/R_b
     return val,val2,val3
 #link_geom cal
 def Link_distance(H_tx,H_rx,alpha_r):
@@ -249,7 +248,6 @@ def sigma_I(sigma_r):
 def sigma_eff(D, sigma_I, lambda_, Z):
     # Aperture averaging
     # D: equiv hard diam, sigma_I : point scintillation index, lambda_ : wavelength, Z: slant distance
-    
     k = np.pi*2/lambda_
     
     A_pw = (1 + 1.062*k*D*D/(4*Z))**(-7/6)

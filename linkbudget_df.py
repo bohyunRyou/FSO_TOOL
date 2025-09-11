@@ -46,14 +46,6 @@ Rx_antenna_index = ["Rx aperture radius W_Rx", "Equiv. hard diameter D_Rx", "DL-
 Rx_antenna_df = pd.DataFrame(Rx_antenna, index = Rx_antenna_index)
 
 
-Rx_requirements = {
-    "val":[1.0e-6, -45.7, 2.67e-08, 2.08e02, 1.0e-2],
-    "unit":[" ","dBm","W","ph/bit", " " ]
-}
-Rx_requirements_index = ["Target BER", "Target Rx Power[dBm]", "Target Rx Power[W]", 
-                         "Target Rx Power[ph/bit]", "Fade loss probability P_Fade"]
-Rx_requirements_df = pd.DataFrame(Rx_requirements, index = Rx_requirements_index)
-
 Rx_sensitivity_model = {
     "val":[1e9, 10,0, 1.0e1, 5.0e0],
     "unit":["bit/s","","ph/bit","ph/bit","ph/bit"]

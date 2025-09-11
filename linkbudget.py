@@ -101,7 +101,7 @@ with tab1:
         styled_Static = st.session_state.Static.style.set_properties(
         subset = (["Link margin"],["val"]),**{"background-color":"SpringGreen"}
     )
-        Static_de = st.dataframe(styled_Static.format({"val":"{:.1f}"}))
+        Static_de = st.dataframe(styled_Static.format({"val":"{:.1f}"}),height=600)
     with col3:
         st.header("Dynamic(fades)")
         styled_Dynamic_fades = st.session_state.Dynamic_fades.style.set_properties(
@@ -403,9 +403,6 @@ with st.sidebar:
     st.title("Configuration")
     mode_li = ["NO AO","WITH AO"]
     selected_mode = st.selectbox("Select mode", mode_li, index = len(mode_li)-1)
-    if st.button("🔄 Reset session"):
-        st.session_state.clear()
-        st.rerun()
     if st.button('cal_input params'):
         # Tx_antenna none val cal
         #link_geometry
@@ -502,7 +499,10 @@ with st.sidebar:
         r0 =  ll.Fried_param(ll.HV_func, alpha=20, H = 4e05, lambda_ = 1.55e-6)
         sigma_theta = st.session_state.Tx_pointing_error.loc["Tx pointing error standard deviation","val"]
         W_R = Tx_antenna_de.loc["Beam radius at Rx W","val"]
-        
+        sigma_00 = Rx_sensitivity_model_de.loc["Backgr.light noise sigma00","val"]
+        sigma_01 = Rx_sensitivity_model_de.loc["Rx constant noise sigma01","val"]
+        sigma_10 = Rx_sensitivity_model_de.loc["sigma10","val"]
+        R_b = Rx_sensitivity_model_de.loc["Data rate(physical layer)","val"]
         #cal
         Tx_pointing_error = st.session_state.Tx_pointing_error.loc["Tx pointing error","val"]
         visibility =st.session_state.Clear_sky_attenuation.loc["visibility","val"]
@@ -518,16 +518,21 @@ with st.sidebar:
         L_point = ll.Mean_Tx_pointing_loss(Tx_pointing_error,theta_tx)
         L_att = ll.Clear_sky_attenuation(visibility,h_eff, alpha_r,lambda_)
         L_spread = 0 #추가 계산 필요
+        P_target=Rx_requirements_de.loc["Target Rx Power[dBm]","val"]
+        
         if selected_mode == "WITH AO":
             L_mean_strehl = 0.0
         else:
-            L_mean_strehl = -12.0
-        #L_mean_strehl = Mean_Rx_Strehl_ratio(D_Rx,r0)
+            L_mean_strehl = ll.SR_shortterm(D_Rx,r0)
         L_rx_opt = Rx_antenna_de.loc["Rx optics loss a_Rx_optics"]["val"]
 
-        P_target=Rx_requirements_de.loc["Target Rx Power[dBm]","val"]
         P_static= P_tx_W + L_tx + G_tx  +L_is + G_rx + L_nf + L_point+ L_att + L_mean_strehl + L_rx_opt
+        if selected_mode == "WITH AO":
+            BER_static = 0.0
+        else:
+            BER_static =  ll.BER_at_probe(sigma_00, sigma_01,sigma_10, P_static, lambda_,R_b)
 
+        L_rx_opt = Rx_antenna_de.loc["Rx optics loss a_Rx_optics"]["val"]
         st.session_state.Static.loc["Tx power","val"] = P_tx_W
         st.session_state.Static.loc["Tx optics loss","val"] = L_tx
         st.session_state.Static.loc["Tx gain","val"] = G_tx 
@@ -543,14 +548,14 @@ with st.sidebar:
         st.session_state.Static.loc["Static Rx Power","val"] = P_static
         st.session_state.Static.loc["Target Rx power","val"] = P_target
         st.session_state.Static.loc["Link margin","val"] = ll.Link_margin(P_target, P_static)
-        st.session_state.Static.loc["Static BER","val"] = 0
+        st.session_state.Static.loc["Static BER","val"] = BER_static
         #st.session_state.Static = Static_de.copy()
         
         P_target = Rx_requirements_de.loc["Target Rx Power[dBm]","val"]
         P_fade = Rx_requirements_de.loc["Fade loss probability P_fade","val"]
         Z = Link_geometry_de.loc["Link distance Z"]["val"]
         sigma_r = ll.sigma_R(ll.HV_func,Z,lambda_)
-        sigma_i=  ll.sigma_I(sigma_r)
+        #sigma_i=  ll.sigma_I(sigma_r)
 
         sigma_eff = ll.sigma_eff(D_Rx,sigma_r,lambda_,Z)
         rho_thr =  P_fade 
@@ -567,15 +572,14 @@ with st.sidebar:
         else:
 
             Rx_strehl = ll.SR_longterm(D_Rx,r0)
+            #ll.Mean_Rx_Strehl_ratio(D_Rx,r0)
         P_dynamic =  L_tx_pointing + L_sc + Rx_strehl
 
         P_static = st.session_state.Static.loc["Static Rx Power","val"]
         P_probe = P_dynamic + P_static
 
-        sigma_00 = Rx_sensitivity_model_de.loc["Backgr.light noise sigma00","val"]
-        sigma_01 = Rx_sensitivity_model_de.loc["Rx constant noise sigma01","val"]
-        sigma_10 = Rx_sensitivity_model_de.loc["sigma10","val"]
-        R_b = Rx_sensitivity_model_de.loc["Data rate(physical layer)","val"] 
+        
+         
         if selected_mode == "WITH AO":
             BER_probe = 0.0
         else:
@@ -591,6 +595,3 @@ with st.sidebar:
         st.session_state.Dynamic_fades.loc["Link margin at prob","val"] = P_probe- P_target
         st.session_state.Dynamic_fades.loc["Ber at prob","val"] = BER_probe
         #st.session_state.Dynamic_fades = Dynamic_fades_de.copy()
-
-
-
