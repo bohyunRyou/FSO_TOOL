@@ -176,8 +176,17 @@ def Clear_sky_attenuation(visibility,h_eff, elevation,lambda_):
     val = np.exp(-coeff*d_atm)
     val = 10*np.log10(val)
     return val
+def G(D, lambda_):
+    val = (np.pi*D/lambda_)**2
+    return val
+def Beam_spread_loss(D_Tx,D_Rx,lambda_,Z,W_Rx):
+    G_T = G(D_Tx,lambda_)
+    G_R = G(D_Rx, lambda_)
+    a = D_Rx/2
+    val = G_T*G_R*(lambda_/(np.pi*4*Z))**2/(1-np.exp(-2*a**2/W_Rx**2))
+    val = 10*np.log10(val)
+    return val
 
-#def Beam_spread_loss():
 def Mean_Rx_Strehl_ratio(D_T,r0):
     #D_rx:equiv hard diameter ,r0: Fried's parameter
     val = 1 + (D_T/r0)**(5/3)

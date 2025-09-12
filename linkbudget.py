@@ -492,6 +492,7 @@ with st.sidebar:
         Z_tx = Tx_antenna_de.loc["Rayleigh range Z_Tx","val"]
         Z_rx = Rx_antenna_de.loc["Rayleigh range Z_Rx","val"]
         D_Rx = Rx_antenna_de.loc["Equiv. hard diameter D_Rx","val"]
+        D_Tx = Tx_antenna_de.loc["Equiv. hard diameter D_Tx","val"]
 
         alpha = Link_geometry_de.loc["Elevation alpha at R","val"]
         H = Link_geometry_de.loc["Tx height","val"]
@@ -517,7 +518,7 @@ with st.sidebar:
         #L_point = -0.6
         L_point = ll.Mean_Tx_pointing_loss(Tx_pointing_error,theta_tx)
         L_att = ll.Clear_sky_attenuation(visibility,h_eff, alpha_r,lambda_)
-        L_spread = 0 #추가 계산 필요
+        L_spread = ll.Beam_spread_loss(D_Tx,D_Rx,lambda_,Z,W_R)
         P_target=Rx_requirements_de.loc["Target Rx Power[dBm]","val"]
         
         if selected_mode == "WITH AO":
